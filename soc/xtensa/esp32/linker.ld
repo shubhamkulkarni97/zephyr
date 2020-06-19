@@ -34,6 +34,13 @@ PROVIDE ( esp32_rom_Cache_Read_Enable = 0x40009a84 );
 PROVIDE ( esp32_rom_ets_set_appcpu_boot_addr = 0x4000689c );
 PROVIDE ( esp32_rom_i2c_readReg = 0x40004148 );
 PROVIDE ( esp32_rom_i2c_writeReg = 0x400041a4 );
+PROVIDE ( ets_timer_arm = 0x40008368 );
+PROVIDE ( ets_timer_arm_us = 0x400083ac );
+PROVIDE ( ets_timer_disarm = 0x400083ec );
+PROVIDE ( ets_timer_done = 0x40008428 );
+PROVIDE ( ets_timer_init = 0x400084e8 );
+PROVIDE ( ets_timer_handler_isr = 0x40008454 );
+PROVIDE ( ets_timer_setfn = 0x40008350 );
 PROVIDE ( ets_printf = 0x40007d54 );
 
 MEMORY
@@ -152,6 +159,10 @@ SECTIONS
     _iram_text_start = ABSOLUTE(.);
     *(.iram1 .iram1.*)
     *(.iram0.literal .iram.literal .iram.text.literal .iram0.text .iram.text)
+    *libnet80211.a:( .wifi0iram  .wifi0iram.*)
+    *libpp.a:( .wifi0iram  .wifi0iram.*)
+    *libnet80211.a:( .wifirxiram  .wifirxiram.*)
+    *libpp.a:( .wifirxiram  .wifirxiram.*)
     _iram_text_end = ABSOLUTE(.);
   } GROUP_LINK_IN(ROMABLE_REGION)
 
