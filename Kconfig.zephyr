@@ -392,7 +392,7 @@ config BOOTLOADER_MCUBOOT
 
 config BOOTLOADER_ESP_IDF
 	bool "ESP-IDF bootloader support"
-	depends on SOC_ESP32
+	default y
 	help
 	  This option will trigger the compilation of the ESP-IDF bootloader
 	  inside the build folder.

@@ -34,6 +34,7 @@ PROVIDE ( esp32_rom_Cache_Read_Enable = 0x40009a84 );
 PROVIDE ( esp32_rom_ets_set_appcpu_boot_addr = 0x4000689c );
 PROVIDE ( esp32_rom_i2c_readReg = 0x40004148 );
 PROVIDE ( esp32_rom_i2c_writeReg = 0x400041a4 );
+PROVIDE ( ets_printf = 0x40007d54 );
 
 MEMORY
 {
@@ -151,7 +152,6 @@ SECTIONS
     _iram_text_start = ABSOLUTE(.);
     *(.iram1 .iram1.*)
     *(.iram0.literal .iram.literal .iram.text.literal .iram0.text .iram.text)
-    *(.literal .text .literal.* .text.*)
     _iram_text_end = ABSOLUTE(.);
   } GROUP_LINK_IN(ROMABLE_REGION)
 
@@ -173,6 +173,22 @@ SECTIONS
     _data_end = ABSOLUTE(.);
     . = ALIGN(4);
   } GROUP_LINK_IN(RAMABLE_REGION)
+
+  .flash.text :
+  {
+    _stext = .;
+    _text_start = ABSOLUTE(.);
+
+    *(.literal .text .literal.* .text.*)
+    _text_end = ABSOLUTE(.);
+    _etext = .;
+
+    /* Similar to _iram_start, this symbol goes here so it is
+       resolved by addr2line in preference to the first symbol in
+       the flash.text segment.
+    */
+    _flash_cache_start = ABSOLUTE(0);
+  } >iram0_2_seg
 
   SECTION_PROLOGUE(_RODATA_SECTION_NAME,,ALIGN(4))
   {

@@ -167,13 +167,13 @@ static struct pinmux_driver_api api_funcs = {
 
 static int pinmux_initialize(struct device *device)
 {
-	uint32_t pin;
+	// uint32_t pin;
 
-	for (pin = 0U; pin < ARRAY_SIZE(pin_mux_off); pin++) {
-		pinmux_set(NULL, pin, 0);
-	}
+	// for (pin = 0U; pin < ARRAY_SIZE(pin_mux_off); pin++) {
+	// 	pinmux_set(NULL, pin, 0);
+	// }
 
-	ARG_UNUSED(device);
+	// ARG_UNUSED(device);
 	return 0;
 }
 

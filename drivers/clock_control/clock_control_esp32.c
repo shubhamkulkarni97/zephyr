@@ -266,31 +266,32 @@ static int clock_control_esp32_get_rate(struct device *dev,
 
 static int clock_control_esp32_init(struct device *dev)
 {
-	struct esp32_clock_config *cfg = DEV_CFG(dev);
+	// struct esp32_clock_config *cfg = DEV_CFG(dev);
 
-	/* Wait for UART first before changing freq to avoid garbage on console */
-	esp32_rom_uart_tx_wait_idle(0);
+	// ets_printf("%d %d %d %d\n", cfg->clk_src_sel, cfg->cpu_freq, cfg->xtal_freq_sel, cfg->xtal_div);
+	// /* Wait for UART first before changing freq to avoid garbage on console */
+	// esp32_rom_uart_tx_wait_idle(0);
 
-	switch (cfg->clk_src_sel) {
-	case ESP32_CLK_SRC_XTAL:
-		REG_SET_FIELD(APB_CTRL_SYSCLK_CONF_REG, APB_CTRL_PRE_DIV_CNT, cfg->xtal_div);
-		/* adjust ref_tick */
-		REG_WRITE(APB_CTRL_XTAL_TICK_CONF_REG, xtal_freq[cfg->xtal_freq_sel] - 1);
-		/* switch clock source */
-		REG_SET_FIELD(RTC_CNTL_CLK_CONF_REG, RTC_CNTL_SOC_CLK_SEL, RTC_CNTL_SOC_CLK_SEL_XTL);
-		break;
-	case ESP32_CLK_SRC_PLL:
-		cpuclk_pll_configure(cfg->xtal_freq_sel, cfg->cpu_freq);
-		break;
-	default:
-		return -EINVAL;
-	}
+	// switch (cfg->clk_src_sel) {
+	// case ESP32_CLK_SRC_XTAL:
+	// 	REG_SET_FIELD(APB_CTRL_SYSCLK_CONF_REG, APB_CTRL_PRE_DIV_CNT, cfg->xtal_div);
+	// 	/* adjust ref_tick */
+	// 	REG_WRITE(APB_CTRL_XTAL_TICK_CONF_REG, xtal_freq[cfg->xtal_freq_sel] - 1);
+	// 	/* switch clock source */
+	// 	REG_SET_FIELD(RTC_CNTL_CLK_CONF_REG, RTC_CNTL_SOC_CLK_SEL, RTC_CNTL_SOC_CLK_SEL_XTL);
+	// 	break;
+	// case ESP32_CLK_SRC_PLL:
+	// 	cpuclk_pll_configure(cfg->xtal_freq_sel, cfg->cpu_freq);
+	// 	break;
+	// default:
+	// 	return -EINVAL;
+	// }
 
-	/* Re-calculate the CCOUNT register value to make time calculation correct.
-	 * This should be updated on each frequency change
-	 * New CCOUNT = Current CCOUNT * (new freq / old freq)
-	 */
-	XTHAL_SET_CCOUNT((uint64_t)XTHAL_GET_CCOUNT() * cfg->cpu_freq / xtal_freq[cfg->xtal_freq_sel]);
+	// /* Re-calculate the CCOUNT register value to make time calculation correct.
+	//  * This should be updated on each frequency change
+	//  * New CCOUNT = Current CCOUNT * (new freq / old freq)
+	//  */
+	// XTHAL_SET_CCOUNT((uint64_t)XTHAL_GET_CCOUNT() * cfg->cpu_freq / xtal_freq[cfg->xtal_freq_sel]);
 	return 0;
 }
 
