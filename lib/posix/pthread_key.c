@@ -80,7 +80,7 @@ int pthread_setspecific(pthread_key_t key, const void *value)
 	struct posix_thread *thread = (struct posix_thread *)pthread_self();
 	pthread_key_data *key_data;
 	pthread_thread_data *thread_spec_data;
-	sys_snode_t *node_l;
+	sys_snode_t *node_l = NULL;
 	int retval = 0;
 
 	/* Traverse the list of keys set by the thread, looking for key.
@@ -89,19 +89,19 @@ int pthread_setspecific(pthread_key_t key, const void *value)
 	 */
 	k_sem_take(&pthread_key_sem, K_FOREVER);
 
-	SYS_SLIST_FOR_EACH_NODE(&(thread->key_list), node_l) {
+	// SYS_SLIST_FOR_EACH_NODE(&(thread->key_list), node_l) {
 
-			thread_spec_data = (pthread_thread_data *)node_l;
+	// 		thread_spec_data = (pthread_thread_data *)node_l;
 
-			if (thread_spec_data->key == key_obj) {
+	// 		if (thread_spec_data->key == key_obj) {
 
-				/* Key is already present so
-				 * associate thread specific data
-				 */
-				thread_spec_data->spec_data = (void *)value;
-				goto out;
-			}
-	}
+	// 			/* Key is already present so
+	// 			 * associate thread specific data
+	// 			 */
+	// 			thread_spec_data->spec_data = (void *)value;
+	// 			goto out;
+	// 		}
+	// }
 
 	if (node_l == NULL) {
 		key_data = k_malloc(sizeof(pthread_key_data));
