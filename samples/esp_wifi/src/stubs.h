@@ -11,5 +11,4 @@ void roundup2(void);
 void ets_delay_us(void);
 void gpio_output_set(void);
 void gpio_output_set_high(void);
-void intr_matrix_set(void);
 unsigned int crc32_le(unsigned int crc, unsigned char const * buf,unsigned int len);

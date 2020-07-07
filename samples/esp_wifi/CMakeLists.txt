@@ -9,6 +9,10 @@ target_sources(app PRIVATE src/main.c)
 target_sources(app PRIVATE src/stubs.c)
 target_sources(app PRIVATE src/esp_phy.c)
 target_sources(app PRIVATE src/system_api.c)
+target_sources(app PRIVATE ${ESP_IDF_PATH}/components/soc/esp32/rtc_clk.c)
+target_sources(app PRIVATE ${ESP_IDF_PATH}/components/esp32/ets_timer_legacy.c)
+target_sources(app PRIVATE ${ESP_IDF_PATH}/components/esp32/esp_timer.c)
+target_sources(app PRIVATE ${ESP_IDF_PATH}/components/esp32/esp_timer_esp32.c)
 
 
 zephyr_include_directories(
