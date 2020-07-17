@@ -26,7 +26,6 @@ PROVIDE ( esp32_rom_uart_tx_one_char = 0x40009200 );
 PROVIDE ( esp32_rom_uart_rx_one_char = 0x400092d0 );
 PROVIDE ( esp32_rom_uart_attach = 0x40008fd0 );
 PROVIDE ( esp32_rom_uart_tx_wait_idle = 0x40009278 );
-PROVIDE ( esp32_rom_intr_matrix_set = 0x4000681c );
 PROVIDE ( esp32_rom_gpio_matrix_in = 0x40009edc );
 PROVIDE ( esp32_rom_gpio_matrix_out = 0x40009f0c );
 PROVIDE ( esp32_rom_Cache_Flush = 0x40009a14 );
@@ -42,6 +41,7 @@ PROVIDE ( ets_timer_init = 0x400084e8 );
 PROVIDE ( ets_timer_handler_isr = 0x40008454 );
 PROVIDE ( ets_timer_setfn = 0x40008350 );
 PROVIDE ( ets_printf = 0x40007d54 );
+PROVIDE ( intr_matrix_set = 0x4000681c );
 
 MEMORY
 {

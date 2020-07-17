@@ -278,10 +278,10 @@ static int gpio_esp32_init(struct device *device)
 	if (!isr_connected) {
 		irq_disable(CONFIG_GPIO_ESP32_IRQ);
 
-		IRQ_CONNECT(CONFIG_GPIO_ESP32_IRQ, 1, gpio_esp32_isr,
+		irq_connect_dynamic(CONFIG_GPIO_ESP32_IRQ, 0, gpio_esp32_isr,
 			    NULL, 0);
 
-		esp32_rom_intr_matrix_set(0, ETS_GPIO_INTR_SOURCE,
+		intr_matrix_set(0, ETS_GPIO_INTR_SOURCE,
 					  CONFIG_GPIO_ESP32_IRQ);
 
 		irq_enable(CONFIG_GPIO_ESP32_IRQ);
