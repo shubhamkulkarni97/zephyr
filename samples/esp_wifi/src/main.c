@@ -21,6 +21,7 @@
 #include "esp_phy.h"
 #include "wifi_system.h"
 #include "esp_timer.h"
+#include "os.h"
 
 K_THREAD_STACK_DEFINE(wifi_stack, 4096);
 
@@ -41,9 +42,19 @@ typedef enum {
 
 // static unsigned int intr_key;
 
+#if 0
 const wpa_crypto_funcs_t g_wifi_default_wpa_crypto_funcs = {
     .size = sizeof(wpa_crypto_funcs_t),
-    .version = ESP_WIFI_CRYPTO_VERSION};
+    .version = ESP_WIFI_CRYPTO_VERSION
+};
+
+#if 0
+int32_t os_random(uint8_t *buf, unsigned int len)
+{
+    return 0x2848;
+}
+#endif
+#endif
 
 uint32_t IRAM_ATTR esp_log_timestamp()
 {
@@ -602,11 +613,6 @@ uint32_t zephyr_random(void)
     return 0x2848;
 }
 
-int32_t os_random(uint8_t *buf, unsigned int len)
-{
-    return 0x2848;
-}
-
 unsigned long random(void)
 {
     return 0x2848;
@@ -696,7 +702,7 @@ wifi_osi_funcs_t g_wifi_osi_funcs = {
     // ._nvs_set_blob = nvs_set_blob,
     // ._nvs_get_blob = nvs_get_blob,
     // ._nvs_erase_key = nvs_erase_key,
-    ._get_random = os_random,
+    ._get_random = os_get_random,
     ._get_time = get_time_wrapper,
     ._random = random,
     ._log_write = esp_log_write,
@@ -765,20 +771,21 @@ esp_err_t esp_wifi_init(const wifi_init_config_t *config)
 
 void main(void)
 {
+    printk("App init\n");
     esp_timer_init();
-	wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT() ;
+    wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT() ;
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = "Oneplus6T",
-            .password = "",
+            .ssid = "myssid",
+            .password = "mypassword",
             /* Setting a password implies station will connect to all security modes including WEP/WPA.
              * However these modes are deprecated and not advisable to be used. Incase your Access point
              * doesn't support WPA2, these mode can be enabled by commenting below line */
             .threshold.authmode = WIFI_AUTH_OPEN,
         },
     };
-	esp_err_t ret = esp_wifi_init(&config);
-	ret |= esp_wifi_set_mode(WIFI_MODE_STA);
+    esp_err_t ret = esp_wifi_init(&config);
+    ret |= esp_wifi_set_mode(WIFI_MODE_STA);
     ret |= esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config);
     ret |= esp_wifi_start();
     if (ret != 0) {
