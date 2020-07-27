@@ -22,6 +22,7 @@
 #include "wifi_system.h"
 #include "esp_timer.h"
 #include "os.h"
+#include "net/net_pkt.h"
 
 K_THREAD_STACK_DEFINE(wifi_stack, 4096);
 
@@ -30,6 +31,8 @@ K_THREAD_STACK_DEFINE(wifi_stack, 4096);
 #define CONFIG_ESP32_DPORT_DIS_INTERRUPT_LVL 5
 
 static void *wifi_msgq_buffer;
+
+struct k_sem wifi_connected_sem;
 
 typedef enum {
     ESP_LOG_NONE,       /*!< No log output */
@@ -784,38 +787,42 @@ static void handler(struct net_mgmt_event_callback *cb,
 			continue;
 		}
 
-		LOG_INF("Your address: %s",
-			log_strdup(net_addr_ntop(AF_INET,
+		ets_printf("Your address: %s\n",
+			net_addr_ntop(AF_INET,
 			    &iface->config.ip.ipv4->unicast[i].address.in_addr,
-						  buf, sizeof(buf))));
-		LOG_INF("Lease time: %u seconds",
+						  buf, sizeof(buf)));
+		ets_printf("Lease time: %u seconds\n",
 			 iface->config.dhcpv4.lease_time);
-		LOG_INF("Subnet: %s",
-			log_strdup(net_addr_ntop(AF_INET,
+		ets_printf("Subnet: %s\n",
+			net_addr_ntop(AF_INET,
 				       &iface->config.ip.ipv4->netmask,
-				       buf, sizeof(buf))));
-		LOG_INF("Router: %s",
-			log_strdup(net_addr_ntop(AF_INET,
+				       buf, sizeof(buf)));
+		ets_printf("Router: %s\n",
+			net_addr_ntop(AF_INET,
 						 &iface->config.ip.ipv4->gw,
-						 buf, sizeof(buf))));
+						 buf, sizeof(buf)));
 	}
+}
+
+esp_err_t adapter_sta_input(void *buffer, uint16_t len, void *eb)
+{
+    struct net_pkt *pkt;
+    struct net_if *iface;
+    iface = net_if_get_default();
+    pkt = net_pkt_rx_alloc_with_buffer(iface, len,
+					   AF_UNSPEC, 0, K_NO_WAIT);
+    net_pkt_write(pkt, buffer, len);
+    if (net_recv_data(iface, pkt) < 0) {
+        ets_printf("Failed to push data\n");
+    }
+    esp_wifi_internal_free_rx_buffer(eb);
+    return ESP_OK;
 }
 
 esp_err_t esp_event_send(system_event_t *event) {
     ets_printf("%d is event\n", event->event_id);
     if (event->event_id == 4) {
-        struct net_if *iface;
-
-        LOG_INF("Run dhcpv4 client");
-
-        net_mgmt_init_event_callback(&mgmt_cb, handler,
-                NET_EVENT_IPV4_ADDR_ADD);
-        net_mgmt_add_event_callback(&mgmt_cb);
-
-        iface = net_if_get_default();
-        ets_printf("Net if: %p\n", iface);
-
-        net_dhcpv4_start(iface);
+        k_sem_give(&wifi_connected_sem);
     }
 	return ESP_OK;
 }
@@ -832,6 +839,7 @@ void main(void)
 {
     printk("App init\n");
     esp_timer_init();
+    k_sem_init(&wifi_connected_sem, 0, 1);
     wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT() ;
     wifi_config_t wifi_config = {
         .sta = {
@@ -858,4 +866,18 @@ void main(void)
     } else {
         ets_printf("Success connect\n");
     }
+    k_sem_take(&wifi_connected_sem, K_FOREVER);
+
+    struct net_if *iface;
+    ret = esp_wifi_internal_reg_rxcb(ESP_IF_WIFI_STA, (wifi_rxcb_t)adapter_sta_input);
+    if (ret != ESP_OK) {
+        ets_printf("Failed to set callback\n");
+    }
+    LOG_INF("Run dhcpv4 client");
+    net_mgmt_init_event_callback(&mgmt_cb, handler,
+            NET_EVENT_IPV4_ADDR_ADD);
+    net_mgmt_add_event_callback(&mgmt_cb);
+    iface = net_if_get_default();
+    ets_printf("Net if: %p\n", iface);
+    net_dhcpv4_start(iface);
 }

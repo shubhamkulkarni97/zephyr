@@ -19,92 +19,35 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <soc.h>
 #include <ethernet/eth_stats.h>
 #include "eth_stellaris_priv.h"
-
-static void eth_esp32_assign_mac(struct device *dev)
-{
-#if 0
-	uint8_t mac_addr[6] = DT_INST_PROP(0, local_mac_address);
-	uint32_t value = 0x0;
-
-	value |= mac_addr[0];
-	value |= mac_addr[1] << 8;
-	value |= mac_addr[2] << 16;
-	value |= mac_addr[3] << 24;
-	sys_write32(value, REG_MACIA0);
-
-	value = 0x0;
-	value |= mac_addr[4];
-	value |= mac_addr[5] << 8;
-	sys_write32(value, REG_MACIA1);
-#endif
-}
-
-static void eth_esp32_flush(struct device *dev)
-{
-#if 0
-	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
-
-	if (dev_data->tx_pos != 0) {
-		sys_write32(dev_data->tx_word, REG_MACDATA);
-		dev_data->tx_pos = 0;
-		dev_data->tx_word = 0U;
-	}
-#endif
-}
-
-static void eth_esp32_send_byte(struct device *dev, uint8_t byte)
-{
-#if 0
-	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
-
-	dev_data->tx_word |= byte << (dev_data->tx_pos * 8);
-	dev_data->tx_pos++;
-	if (dev_data->tx_pos == 4) {
-		sys_write32(dev_data->tx_word, REG_MACDATA);
-		dev_data->tx_pos = 0;
-		dev_data->tx_word = 0U;
-	}
-#endif
-}
+#include "esp_wifi_internal.h"
 
 static int eth_esp32_send(struct device *dev, struct net_pkt *pkt)
 {
 	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
 	struct net_buf *frag;
-	uint16_t i, data_len;
+	uint16_t offset = 0;
 
-#if 0
+
 	/* Frame transmission
 	 *
 	 * First two bytes is the length of the frame, exclusive of
 	 * the header length.
 	 */
-	data_len = net_pkt_get_len(pkt) - sizeof(struct net_eth_hdr);
-	eth_esp32_send_byte(dev, data_len & 0xff);
-	eth_esp32_send_byte(dev, (data_len & 0xff00) >> 8);
+	uint8_t *tx_buffer = (uint8_t *) k_malloc(net_pkt_get_len(pkt));
+	if (tx_buffer == NULL) {
+		return -EIO;
+	}
 
 	/* Send the payload */
 	for (frag = pkt->frags; frag; frag = frag->frags) {
-		for (i = 0U; i < frag->len; ++i) {
-			eth_esp32_send_byte(dev, frag->data[i]);
-		}
+		memcpy((tx_buffer + offset), frag->data, frag->len);
+		offset += frag->len;
 	}
 
-	/* Will transmit the partial word. */
-	eth_esp32_flush(dev);
+	esp_wifi_internal_tx(ESP_IF_WIFI_STA, (void *) tx_buffer, net_pkt_get_len(pkt));
 
-	/* Enable transmit. */
-	sys_write32(BIT_MACTR_NEWTX, REG_MACTR);
-
-	/* Wait and check if transmit successful or not. */
-	k_sem_take(&dev_data->tx_sem, K_FOREVER);
-
-	if (dev_data->tx_err) {
-		dev_data->tx_err = false;
-		return -EIO;
-	}
-#endif
-	LOG_DBG("pkt sent %p len %d", pkt, data_len);
+	LOG_DBG("pkt sent %p len %d", pkt, net_pkt_get_len(pkt));
+	k_free(tx_buffer);
 
 	return 0;
 }
@@ -238,50 +181,6 @@ err_mem:
 	eth_esp32_rx_error(iface);
 }
 
-#if 0
-static void eth_esp32_isr(void *arg)
-{
-	/* Read the interrupt status */
-	struct device *dev = (struct device *)arg;
-	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
-	int isr_val = sys_read32(REG_MACRIS);
-	uint32_t lock;
-
-	lock = irq_lock();
-
-	/* Acknowledge the interrupt. */
-	sys_write32(isr_val, REG_MACRIS);
-
-	if (isr_val & BIT_MACRIS_RXINT) {
-		eth_esp32_rx(dev);
-	}
-
-	if (isr_val & BIT_MACRIS_TXEMP) {
-		dev_data->tx_err = false;
-		k_sem_give(&dev_data->tx_sem);
-	}
-
-	if (isr_val & BIT_MACRIS_TXER) {
-		LOG_ERR("Transmit Frame Error");
-		eth_stats_update_errors_tx(dev_data->iface);
-		dev_data->tx_err = true;
-		k_sem_give(&dev_data->tx_sem);
-	}
-
-	if (isr_val & BIT_MACRIS_RXER) {
-		LOG_ERR("Error Receiving Frame");
-		eth_esp32_rx_error(dev_data->iface);
-	}
-
-	if (isr_val & BIT_MACRIS_FOV) {
-		LOG_ERR("Error Rx Overrun");
-		eth_esp32_rx_error(dev_data->iface);
-	}
-
-	irq_unlock(lock);
-}
-#endif
-
 static void eth_esp32_init(struct net_if *iface)
 {
 	struct device *dev = net_if_get_device(iface);
@@ -295,9 +194,6 @@ static void eth_esp32_init(struct net_if *iface)
 			     dev_data->mac_addr, 6, NET_LINK_ETHERNET);
 
 	ethernet_init(iface);
-
-	/* Initialize semaphore. */
-	k_sem_init(&dev_data->tx_sem, 0, 1);
 
 	/* Initialize Interrupts. */
 	dev_conf->config_func(dev);
@@ -354,7 +250,7 @@ struct eth_esp32_config eth_cfg = {
 };
 
 struct eth_esp32_runtime eth_data = {
-	.mac_addr = 0 /*DT_INST_PROP(0, local_mac_address)*/,
+	.mac_addr = {0x30, 0xae, 0xa4, 0xef, 0x48, 0x58} /*DT_INST_PROP(0, local_mac_address)*/,
 	.tx_err = false,
 	.tx_word = 0,
 	.tx_pos = 0,
