@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT ti_stellaris_ethernet
+#define DT_DRV_COMPAT espressif_esp32_ethernet
 
-#define LOG_MODULE_NAME eth_stellaris
+#define LOG_MODULE_NAME eth_esp32
 #define LOG_LEVEL CONFIG_ETHERNET_LOG_LEVEL
 #include <logging/log.h>
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
@@ -20,8 +20,9 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <ethernet/eth_stats.h>
 #include "eth_stellaris_priv.h"
 
-static void eth_stellaris_assign_mac(struct device *dev)
+static void eth_esp32_assign_mac(struct device *dev)
 {
+#if 0
 	uint8_t mac_addr[6] = DT_INST_PROP(0, local_mac_address);
 	uint32_t value = 0x0;
 
@@ -35,22 +36,26 @@ static void eth_stellaris_assign_mac(struct device *dev)
 	value |= mac_addr[4];
 	value |= mac_addr[5] << 8;
 	sys_write32(value, REG_MACIA1);
+#endif
 }
 
-static void eth_stellaris_flush(struct device *dev)
+static void eth_esp32_flush(struct device *dev)
 {
-	struct eth_stellaris_runtime *dev_data = DEV_DATA(dev);
+#if 0
+	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
 
 	if (dev_data->tx_pos != 0) {
 		sys_write32(dev_data->tx_word, REG_MACDATA);
 		dev_data->tx_pos = 0;
 		dev_data->tx_word = 0U;
 	}
+#endif
 }
 
-static void eth_stellaris_send_byte(struct device *dev, uint8_t byte)
+static void eth_esp32_send_byte(struct device *dev, uint8_t byte)
 {
-	struct eth_stellaris_runtime *dev_data = DEV_DATA(dev);
+#if 0
+	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
 
 	dev_data->tx_word |= byte << (dev_data->tx_pos * 8);
 	dev_data->tx_pos++;
@@ -59,32 +64,34 @@ static void eth_stellaris_send_byte(struct device *dev, uint8_t byte)
 		dev_data->tx_pos = 0;
 		dev_data->tx_word = 0U;
 	}
+#endif
 }
 
-static int eth_stellaris_send(struct device *dev, struct net_pkt *pkt)
+static int eth_esp32_send(struct device *dev, struct net_pkt *pkt)
 {
-	struct eth_stellaris_runtime *dev_data = DEV_DATA(dev);
+	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
 	struct net_buf *frag;
 	uint16_t i, data_len;
 
+#if 0
 	/* Frame transmission
 	 *
 	 * First two bytes is the length of the frame, exclusive of
 	 * the header length.
 	 */
 	data_len = net_pkt_get_len(pkt) - sizeof(struct net_eth_hdr);
-	eth_stellaris_send_byte(dev, data_len & 0xff);
-	eth_stellaris_send_byte(dev, (data_len & 0xff00) >> 8);
+	eth_esp32_send_byte(dev, data_len & 0xff);
+	eth_esp32_send_byte(dev, (data_len & 0xff00) >> 8);
 
 	/* Send the payload */
 	for (frag = pkt->frags; frag; frag = frag->frags) {
 		for (i = 0U; i < frag->len; ++i) {
-			eth_stellaris_send_byte(dev, frag->data[i]);
+			eth_esp32_send_byte(dev, frag->data[i]);
 		}
 	}
 
 	/* Will transmit the partial word. */
-	eth_stellaris_flush(dev);
+	eth_esp32_flush(dev);
 
 	/* Enable transmit. */
 	sys_write32(BIT_MACTR_NEWTX, REG_MACTR);
@@ -96,19 +103,20 @@ static int eth_stellaris_send(struct device *dev, struct net_pkt *pkt)
 		dev_data->tx_err = false;
 		return -EIO;
 	}
-
+#endif
 	LOG_DBG("pkt sent %p len %d", pkt, data_len);
 
 	return 0;
 }
 
-static void eth_stellaris_rx_error(struct net_if *iface)
+static void eth_esp32_rx_error(struct net_if *iface)
 {
 	struct device *dev = net_if_get_device(iface);
 	uint32_t val;
 
 	eth_stats_update_errors_rx(iface);
 
+#if 0
 	/* Clear the rx_frame buffer,
 	 * otherwise it could lead to underflow errors
 	 */
@@ -116,11 +124,13 @@ static void eth_stellaris_rx_error(struct net_if *iface)
 	sys_write32(BIT_MACRCTL_RSTFIFO, REG_MACRCTL);
 	val = BIT_MACRCTL_BADCRC | BIT_MACRCTL_RXEN;
 	sys_write32(val, REG_MACRCTL);
+#endif
 }
 
-static struct net_pkt *eth_stellaris_rx_pkt(struct device *dev,
+static struct net_pkt *eth_esp32_rx_pkt(struct device *dev,
 					    struct net_if *iface)
 {
+#if 0
 	int frame_len, bytes_left;
 	struct net_pkt *pkt;
 	uint32_t reg_val;
@@ -198,16 +208,17 @@ static struct net_pkt *eth_stellaris_rx_pkt(struct device *dev,
 error:
 	net_pkt_unref(pkt);
 
+#endif
 	return NULL;
 }
 
-static void eth_stellaris_rx(struct device *dev)
+static void eth_esp32_rx(struct device *dev)
 {
-	struct eth_stellaris_runtime *dev_data = DEV_DATA(dev);
+	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
 	struct net_if *iface = dev_data->iface;
 	struct net_pkt *pkt;
 
-	pkt = eth_stellaris_rx_pkt(dev, iface);
+	pkt = eth_esp32_rx_pkt(dev, iface);
 	if (!pkt) {
 		LOG_ERR("Failed to read data");
 		goto err_mem;
@@ -224,14 +235,15 @@ pkt_unref:
 	net_pkt_unref(pkt);
 
 err_mem:
-	eth_stellaris_rx_error(iface);
+	eth_esp32_rx_error(iface);
 }
 
-static void eth_stellaris_isr(void *arg)
+#if 0
+static void eth_esp32_isr(void *arg)
 {
 	/* Read the interrupt status */
 	struct device *dev = (struct device *)arg;
-	struct eth_stellaris_runtime *dev_data = DEV_DATA(dev);
+	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
 	int isr_val = sys_read32(REG_MACRIS);
 	uint32_t lock;
 
@@ -241,7 +253,7 @@ static void eth_stellaris_isr(void *arg)
 	sys_write32(isr_val, REG_MACRIS);
 
 	if (isr_val & BIT_MACRIS_RXINT) {
-		eth_stellaris_rx(dev);
+		eth_esp32_rx(dev);
 	}
 
 	if (isr_val & BIT_MACRIS_TXEMP) {
@@ -258,22 +270,23 @@ static void eth_stellaris_isr(void *arg)
 
 	if (isr_val & BIT_MACRIS_RXER) {
 		LOG_ERR("Error Receiving Frame");
-		eth_stellaris_rx_error(dev_data->iface);
+		eth_esp32_rx_error(dev_data->iface);
 	}
 
 	if (isr_val & BIT_MACRIS_FOV) {
 		LOG_ERR("Error Rx Overrun");
-		eth_stellaris_rx_error(dev_data->iface);
+		eth_esp32_rx_error(dev_data->iface);
 	}
 
 	irq_unlock(lock);
 }
+#endif
 
-static void eth_stellaris_init(struct net_if *iface)
+static void eth_esp32_init(struct net_if *iface)
 {
 	struct device *dev = net_if_get_device(iface);
-	const struct eth_stellaris_config *dev_conf = DEV_CFG(dev);
-	struct eth_stellaris_runtime *dev_data = DEV_DATA(dev);
+	const struct eth_esp32_config *dev_conf = DEV_CFG(dev);
+	struct eth_esp32_runtime *dev_data = DEV_DATA(dev);
 
 	dev_data->iface = iface;
 
@@ -291,18 +304,19 @@ static void eth_stellaris_init(struct net_if *iface)
 }
 
 #if defined(CONFIG_NET_STATISTICS_ETHERNET)
-static struct net_stats_eth *eth_stellaris_stats(struct device *dev)
+static struct net_stats_eth *eth_esp32_stats(struct device *dev)
 {
 	return &(DEV_DATA(dev)->stats);
 }
 #endif
 
-static int eth_stellaris_dev_init(struct device *dev)
+static int eth_esp32_dev_init(struct device *dev)
 {
+#if 0
 	uint32_t value;
 
 	/* Assign MAC address to Hardware */
-	eth_stellaris_assign_mac(dev);
+	eth_esp32_assign_mac(dev);
 
 	/* Program MCRCTL to clear RXFIFO */
 	value = BIT_MACRCTL_RSTFIFO;
@@ -316,43 +330,46 @@ static int eth_stellaris_dev_init(struct device *dev)
 	/* Enable Receiver */
 	value = BIT_MACRCTL_BADCRC | BIT_MACRCTL_RXEN;
 	sys_write32(value, REG_MACRCTL);
+#endif
 
 	return 0;
 }
 
-DEVICE_DECLARE(eth_stellaris);
+DEVICE_DECLARE(eth_esp32);
 
-static void eth_stellaris_irq_config(struct device *dev)
+static void eth_esp32_irq_config(struct device *dev)
 {
+#if 0
 	/* Enable Interrupt. */
 	IRQ_CONNECT(DT_INST_IRQN(0),
 		    DT_INST_IRQ(0, priority),
-		    eth_stellaris_isr, DEVICE_GET(eth_stellaris), 0);
+		    eth_esp32_isr, DEVICE_GET(eth_esp32), 0);
 	irq_enable(DT_INST_IRQN(0));
+#endif
 }
 
-struct eth_stellaris_config eth_cfg = {
-	.mac_base = DT_INST_REG_ADDR(0),
-	.config_func = eth_stellaris_irq_config,
+struct eth_esp32_config eth_cfg = {
+	.mac_base = 0 /*DT_INST_REG_ADDR(0)*/,
+	.config_func = eth_esp32_irq_config,
 };
 
-struct eth_stellaris_runtime eth_data = {
-	.mac_addr = DT_INST_PROP(0, local_mac_address),
+struct eth_esp32_runtime eth_data = {
+	.mac_addr = 0 /*DT_INST_PROP(0, local_mac_address)*/,
 	.tx_err = false,
 	.tx_word = 0,
 	.tx_pos = 0,
 };
 
-static const struct ethernet_api eth_stellaris_apis = {
-	.iface_api.init	= eth_stellaris_init,
-	.send =  eth_stellaris_send,
+static const struct ethernet_api eth_esp32_apis = {
+	.iface_api.init	= eth_esp32_init,
+	.send =  eth_esp32_send,
 #if defined(CONFIG_NET_STATISTICS_ETHERNET)
-	.get_stats = eth_stellaris_stats,
+	.get_stats = eth_esp32_stats,
 #endif
 };
 
-NET_DEVICE_INIT(eth_stellaris, DT_INST_LABEL(0),
-		eth_stellaris_dev_init, device_pm_control_nop,
+NET_DEVICE_INIT(eth_esp32, "esp_eth" /*DT_INST_LABEL(0)*/,
+		eth_esp32_dev_init, device_pm_control_nop,
 		&eth_data, &eth_cfg, CONFIG_ETH_INIT_PRIORITY,
-		&eth_stellaris_apis, ETHERNET_L2,
+		&eth_esp32_apis, ETHERNET_L2,
 		NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);

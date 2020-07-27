@@ -236,7 +236,7 @@ SECTIONS
     *(.gnu.version_d)
     . = ALIGN(4);               /* this table MUST be 4-byte aligned */
     _rodata_end = ABSOLUTE(.);
-  } GROUP_LINK_IN(RAMABLE_REGION)
+  } > drom0_0_seg
 
 
   /* Shared RAM */

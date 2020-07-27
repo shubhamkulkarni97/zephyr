@@ -9,9 +9,9 @@
 #define ETH_STELLARIS_PRIV_H_
 
 #define DEV_DATA(dev) \
-	((struct eth_stellaris_runtime *)(dev)->driver_data)
+	((struct eth_esp32_runtime *)(dev)->driver_data)
 #define DEV_CFG(dev) \
-	((const struct eth_stellaris_config *const)(dev)->config_info)
+	((const struct eth_esp32_config *const)(dev)->config_info)
 /*
  *  Register mapping
  */
@@ -48,7 +48,7 @@
 #define BIT_MACRIS_FOV		0x8
 #define BIT_MACRIS_RXER		0x10
 
-struct eth_stellaris_runtime {
+struct eth_esp32_runtime {
 	struct net_if *iface;
 	uint8_t mac_addr[6];
 	struct k_sem tx_sem;
@@ -60,13 +60,13 @@ struct eth_stellaris_runtime {
 #endif
 };
 
-typedef void (*eth_stellaris_config_irq_t)(struct device *dev);
+typedef void (*eth_esp32_config_irq_t)(struct device *dev);
 
-struct eth_stellaris_config {
+struct eth_esp32_config {
 	uint32_t mac_base;
 	uint32_t sys_ctrl_base;
 	uint32_t irq_num;
-	eth_stellaris_config_irq_t config_func;
+	eth_esp32_config_irq_t config_func;
 };
 
 #endif /* ETH_STELLARIS_PRIV_H_ */
