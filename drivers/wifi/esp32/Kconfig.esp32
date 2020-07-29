@@ -1,0 +1,18 @@
+# Copyright (c) 2019 Tobias Svehagen
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig WIFI_ESP32
+	bool "Espressif ESP32 support"
+	default n
+
+if WIFI_ESP32
+
+config EVENT_TASK_STACK_SIZE
+	int "Event Task Stack Size"
+	default 4096
+
+config EVENT_TASK_PRIO
+	int "Event Task Priority"
+	default 4
+
+endif # WIFI_ESP32
