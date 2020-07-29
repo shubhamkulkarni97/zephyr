@@ -35,6 +35,7 @@ PROVIDE ( esp32_rom_Cache_Read_Enable = 0x40009a84 );
 PROVIDE ( esp32_rom_ets_set_appcpu_boot_addr = 0x4000689c );
 PROVIDE ( esp32_rom_i2c_readReg = 0x40004148 );
 PROVIDE ( esp32_rom_i2c_writeReg = 0x400041a4 );
+PROVIDE ( phy_get_romfuncs = 0x40004100 );
 PROVIDE ( ets_printf = 0x40007d54 );
 PROVIDE ( intr_matrix_set = 0x4000681c );
 
@@ -156,6 +157,18 @@ SECTIONS
     _iram_text_start = ABSOLUTE(.);
     *(.iram1 .iram1.*)
     *(.iram0.literal .iram.literal .iram.text.literal .iram0.text .iram.text)
+    *libesp32.a:panic.*(.literal .text .literal.* .text.*)
+    *librtc.a:(.literal .text .literal.* .text.*)
+    *libsoc.a:rtc_*.*(.literal .text .literal.* .text.*)
+    *libsoc.a:cpu_util.*(.literal .text .literal.* .text.*)
+    *libhal.a:(.literal .text .literal.* .text.*)
+    *libgcc.a:lib2funcs.*(.literal .text .literal.* .text.*)
+    *libspi_flash.a:spi_flash_rom_patch.*(.literal .text .literal.* .text.*)
+    *libgcov.a:(.literal .text .literal.* .text.*)
+    *libnet80211.a:( .wifi0iram  .wifi0iram.*)
+    *libpp.a:( .wifi0iram  .wifi0iram.*)
+    *libnet80211.a:( .wifirxiram  .wifirxiram.*)
+    *libpp.a:( .wifirxiram  .wifirxiram.*)
     _iram_text_end = ABSOLUTE(.);
   } GROUP_LINK_IN(ROMABLE_REGION)
 
