@@ -19,6 +19,7 @@ LOG_MODULE_REGISTER(net_dhcpv4_client_sample, LOG_LEVEL_DBG);
 #include <net/net_core.h>
 #include <net/net_context.h>
 #include <net/net_mgmt.h>
+#include "rom/ets_sys.h"
 
 static struct net_mgmt_event_callback mgmt_cb;
 
@@ -40,18 +41,18 @@ static void handler(struct net_mgmt_event_callback *cb,
 			continue;
 		}
 
-		LOG_INF("Your address: %s",
-			log_strdup(net_addr_ntop(AF_INET,
+		ets_printf("Your address: %s\n",
+			(net_addr_ntop(AF_INET,
 			    &iface->config.ip.ipv4->unicast[i].address.in_addr,
 						  buf, sizeof(buf))));
-		LOG_INF("Lease time: %u seconds",
+		ets_printf("Lease time: %u seconds\n",
 			 iface->config.dhcpv4.lease_time);
-		LOG_INF("Subnet: %s",
-			log_strdup(net_addr_ntop(AF_INET,
+		ets_printf("Subnet: %s\n",
+			(net_addr_ntop(AF_INET,
 				       &iface->config.ip.ipv4->netmask,
 				       buf, sizeof(buf))));
-		LOG_INF("Router: %s",
-			log_strdup(net_addr_ntop(AF_INET,
+		ets_printf("Router: %s\n",
+			(net_addr_ntop(AF_INET,
 						 &iface->config.ip.ipv4->gw,
 						 buf, sizeof(buf))));
 	}
@@ -61,7 +62,7 @@ void main(void)
 {
 	struct net_if *iface;
 
-	LOG_INF("Run dhcpv4 client");
+	ets_printf("Run dhcpv4 client\n");
 
 	net_mgmt_init_event_callback(&mgmt_cb, handler,
 				     NET_EVENT_IPV4_ADDR_ADD);
