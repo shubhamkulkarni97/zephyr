@@ -19,6 +19,8 @@
 
 #define RAMABLE_REGION dram0_0_seg :dram0_0_phdr
 #define ROMABLE_REGION iram0_0_seg :iram0_0_phdr
+#define FLASH_CODE_REGION iram0_2_seg :iram0_2_phdr
+#define FLASH_DATA_REGION drom0_0_seg :drom0_0_phdr
 
 PROVIDE ( __stack = 0x3ffe3f20 );
 
@@ -51,8 +53,10 @@ MEMORY
 
 PHDRS
 {
-  iram0_0_phdr PT_LOAD;
+  drom0_0_phdr PT_LOAD;
   dram0_0_phdr PT_LOAD;
+  iram0_0_phdr PT_LOAD;
+  iram0_2_phdr PT_LOAD;
 }
 
 /*  Default entry point:  */
@@ -188,7 +192,7 @@ SECTIONS
        the flash.text segment.
     */
     _flash_cache_start = ABSOLUTE(0);
-  } >iram0_2_seg
+  } GROUP_LINK_IN(FLASH_CODE_REGION)
 
   SECTION_PROLOGUE(_RODATA_SECTION_NAME,,ALIGN(4))
   {
@@ -222,7 +226,7 @@ SECTIONS
     *(.gnu.version_d)
     . = ALIGN(4);               /* this table MUST be 4-byte aligned */
     _rodata_end = ABSOLUTE(.);
-  } GROUP_LINK_IN(RAMABLE_REGION)
+  } GROUP_LINK_IN(FLASH_DATA_REGION)
 
 
   /* Shared RAM */
