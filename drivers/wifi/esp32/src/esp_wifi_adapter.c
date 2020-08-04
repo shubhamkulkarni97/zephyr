@@ -21,7 +21,7 @@
 #include "esp_phy.h"
 #include "wifi_system.h"
 #include "esp_timer.h"
-// #include "os.h"
+#include "os.h"
 #include "net/net_pkt.h"
 #include "esp_event.h"
 
@@ -46,10 +46,12 @@ typedef enum {
     ESP_LOG_VERBOSE     /*!< Bigger chunks of debugging information, or frequent messages which can potentially flood the output. */
 } esp_log_level_t;
 
+#if 0
 const wpa_crypto_funcs_t g_wifi_default_wpa_crypto_funcs = {
     .size = sizeof(wpa_crypto_funcs_t),
     .version = ESP_WIFI_CRYPTO_VERSION
 };
+#endif
 
 #if 0
 int32_t os_random(uint8_t *buf, unsigned int len)
@@ -621,11 +623,12 @@ int32_t esp_modem_sleep_deregister(uint32_t module)
     return 0;
 }
 
-
+#if 0
 int32_t os_get_random(uint8_t *buf, size_t len)
 {
     return 0x2428;
 }
+#endif
 
 static void wifi_clock_enable_wrapper(void)
 {

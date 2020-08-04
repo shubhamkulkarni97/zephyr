@@ -21,11 +21,6 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "esp_timer.h"
 #include "wifi_system.h"
 
-int hexstr2bin(const char *hex, uint8_t *buf, size_t len)
-{
-	return 0;
-}
-
 #define DEV_DATA(dev) \
 	((struct eth_esp32_runtime *)(dev)->driver_data)
 #define DEV_CFG(dev) \
