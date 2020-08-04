@@ -12,25 +12,30 @@
 #include "esp_wifi.h"
 #include "stdlib.h"
 #include "string.h"
-#include "esp_wifi_internal.h"
-#include "esp_dport_access.h"
-#include "rom/ets_sys.h"
+#include "esp_private/wifi.h"
+#include "soc/dport_access.h"
+#include "esp32/rom/ets_sys.h"
 #include "esp_attr.h"
-#include "esp_wifi_os_adapter.h"
+#include "esp_private/wifi_os_adapter.h"
 #include "posix/pthread.h"
 #include "esp_phy.h"
 #include "wifi_system.h"
 #include "esp_timer.h"
-#include "os.h"
+// #include "os.h"
 #include "net/net_pkt.h"
+#include "esp_event.h"
 
 K_THREAD_STACK_DEFINE(wifi_stack, 4096);
+
+ESP_EVENT_DEFINE_BASE(WIFI_EVENT);
 
 #define portTICK_PERIOD_MS (1000 / 100)
 
 #define CONFIG_ESP32_DPORT_DIS_INTERRUPT_LVL 5
 
 static void *wifi_msgq_buffer;
+
+uint64_t g_wifi_feature_caps = 0;
 
 typedef enum {
     ESP_LOG_NONE,       /*!< No log output */
@@ -41,12 +46,10 @@ typedef enum {
     ESP_LOG_VERBOSE     /*!< Bigger chunks of debugging information, or frequent messages which can potentially flood the output. */
 } esp_log_level_t;
 
-#if 0
 const wpa_crypto_funcs_t g_wifi_default_wpa_crypto_funcs = {
     .size = sizeof(wpa_crypto_funcs_t),
     .version = ESP_WIFI_CRYPTO_VERSION
 };
-#endif
 
 #if 0
 int32_t os_random(uint8_t *buf, unsigned int len)
@@ -618,20 +621,27 @@ int32_t esp_modem_sleep_deregister(uint32_t module)
     return 0;
 }
 
-void sc_ack_send_wrapper(void *param)
-{
-}
 
-void sc_ack_send_stop(void)
-{
-}
-
-#if 0
 int32_t os_get_random(uint8_t *buf, size_t len)
 {
     return 0x2428;
 }
-#endif
+
+static void wifi_clock_enable_wrapper(void)
+{
+    periph_module_enable(PERIPH_WIFI_MODULE);
+}
+
+static void wifi_clock_disable_wrapper(void)
+{
+    periph_module_disable(PERIPH_WIFI_MODULE);
+}
+
+static void wifi_reset_mac_wrapper(void)
+{
+    DPORT_SET_PERI_REG_MASK(DPORT_CORE_RST_EN_REG, DPORT_MAC_RST);
+    DPORT_CLEAR_PERI_REG_MASK(DPORT_CORE_RST_EN_REG, DPORT_MAC_RST);
+}
 
 wifi_osi_funcs_t g_wifi_osi_funcs = {
     ._version = ESP_WIFI_OS_ADAPTER_VERSION,
@@ -683,14 +693,16 @@ wifi_osi_funcs_t g_wifi_osi_funcs = {
     ._phy_load_cal_and_init = esp_phy_load_cal_and_init,
     ._phy_common_clock_enable = esp_phy_common_clock_enable,
     ._phy_common_clock_disable = esp_phy_common_clock_disable,
+    ._phy_update_country_info = esp_phy_update_country_info,
     ._read_mac = esp_read_mac,
     ._timer_arm = timer_arm_wrapper,
     ._timer_disarm = timer_disarm_wrapper,
     ._timer_done = timer_done_wrapper,
     ._timer_setfn = timer_setfn_wrapper,
     ._timer_arm_us = timer_arm_us_wrapper,
-    ._periph_module_enable = periph_module_enable,
-    ._periph_module_disable = periph_module_disable,
+    ._wifi_reset_mac = wifi_reset_mac_wrapper,
+    ._wifi_clock_enable = wifi_clock_enable_wrapper,
+    ._wifi_clock_disable = wifi_clock_disable_wrapper,
     ._esp_timer_get_time = esp_timer_get_time,
     // ._nvs_set_i8 = nvs_set_i8,
     // ._nvs_get_i8 = nvs_get_i8,
@@ -724,8 +736,6 @@ wifi_osi_funcs_t g_wifi_osi_funcs = {
     ._modem_sleep_exit = esp_modem_sleep_exit,
     ._modem_sleep_register = esp_modem_sleep_register,
     ._modem_sleep_deregister = esp_modem_sleep_deregister,
-    ._sc_ack_send = sc_ack_send_wrapper,
-    ._sc_ack_send_stop = sc_ack_send_stop,
     ._coex_status_get = coex_status_get_wrapper,
     ._coex_condition_set = coex_condition_set_wrapper,
     ._coex_wifi_request = coex_wifi_request_wrapper,

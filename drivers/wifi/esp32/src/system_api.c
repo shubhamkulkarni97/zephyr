@@ -2,7 +2,7 @@
 #include "string.h"
 #include "wifi_system.h"
 #include "soc/efuse_reg.h"
-#include "rom/ets_sys.h"
+#include "esp32/rom/ets_sys.h"
 
 static unsigned int lock_key;
 

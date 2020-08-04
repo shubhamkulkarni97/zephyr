@@ -16,10 +16,15 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <soc.h>
 #include <ethernet/eth_stats.h>
 #include "esp_networking_priv.h"
-#include "esp_wifi_internal.h"
+#include "esp_private/wifi.h"
 #include "esp_event.h"
 #include "esp_timer.h"
 #include "wifi_system.h"
+
+int hexstr2bin(const char *hex, uint8_t *buf, size_t len)
+{
+	return 0;
+}
 
 #define DEV_DATA(dev) \
 	((struct eth_esp32_runtime *)(dev)->driver_data)

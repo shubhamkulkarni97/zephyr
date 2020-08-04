@@ -85,12 +85,12 @@ zephyr_sources(
   src/system_api.c
   src/esp_networking.c
   src/esp_event.c
-  ${ESP_IDF_PATH}/components/soc/esp32/rtc_clk.c
-  ${ESP_IDF_PATH}/components/esp32/ets_timer_legacy.c
-  ${ESP_IDF_PATH}/components/esp32/esp_timer.c
-  ${ESP_IDF_PATH}/components/esp32/esp_timer_esp32.c
-  ${ESP_IDF_PATH}/components/esp32/fast_crypto_ops.c
-  ${WPA_SUPPLICANT_SRCS}
+  ${ESP_IDF_PATH}/components/soc/src/esp32/rtc_clk.c
+  ${ESP_IDF_PATH}/components/esp_timer/src/ets_timer_legacy.c
+  ${ESP_IDF_PATH}/components/esp_timer/src/esp_timer.c
+  ${ESP_IDF_PATH}/components/esp_timer/src/esp_timer_impl_frc_legacy.c
+  #${ESP_IDF_PATH}/components/esp32/fast_crypto_ops.c
+  #${WPA_SUPPLICANT_SRCS}
   src/esp_shell.c
   )
 
@@ -117,23 +117,20 @@ zephyr_link_libraries(
   ## wifi
   core
   net80211
-  wpa
   core
   net80211
   pp
   coexist
   phy
   rtc
-  wpa2
-  wps
   mesh
   mbedTLS
 
   ## esp-idf wifi libs refer gcc libs symbols, so linked in libgcc
   gcc
   -L${ESP_IDF_PATH}/components/esp32
-  -L${ESP_IDF_PATH}/components/esp32/lib
-  -L${ESP_IDF_PATH}/components/wpa_supplicant
+  -L${ESP_IDF_PATH}/components/esp_wifi/lib/esp32
+  #-L${ESP_IDF_PATH}/components/wpa_supplicant
   -Wl,--defsym,phy_printf=printf
   -Wl,--defsym,net80211_printf=printf
   -Wl,--defsym,coexist_printf=printf

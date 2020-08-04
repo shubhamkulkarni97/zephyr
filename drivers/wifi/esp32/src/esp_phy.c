@@ -1,8 +1,8 @@
 #include <zephyr.h>
 #include "esp_phy.h"
-#include "rom/ets_sys.h"
+#include "esp32/rom/ets_sys.h"
 #include "phy.h"
-#include "esp_wifi_internal.h"
+#include "esp_private/wifi.h"
 
 static volatile int32_t s_common_clock_enable_ref = 0;
 static unsigned int intr_key;
@@ -500,6 +500,35 @@ void esp_phy_load_cal_and_init(phy_rf_module_t module)
 #endif
 
     k_free(cal_data); // PHY maintains a copy of calibration data, so we can free this
+}
+
+esp_err_t esp_phy_update_country_info(const char *country)
+{
+#if CONFIG_ESP32_SUPPORT_MULTIPLE_PHY_INIT_DATA_BIN
+    uint8_t phy_init_data_type_map = 0;
+    //if country equal s_phy_current_country, return;
+    if (!memcmp(country, s_phy_current_country, sizeof(s_phy_current_country))) {
+        return ESP_OK;
+    }
+
+    memcpy(s_phy_current_country, country, sizeof(s_phy_current_country));
+    
+    if (!s_multiple_phy_init_data_bin) {
+        ESP_LOGD(TAG, "Does not support multiple PHY init data bins");
+        return ESP_FAIL;
+    }
+
+    phy_init_data_type_map = phy_find_bin_type_according_country(country);
+    if (phy_init_data_type_map == s_phy_init_data_type) {
+        return ESP_OK;
+    }
+    
+    esp_err_t err =  esp_phy_update_init_data(phy_init_data_type_map);
+    if (err != ESP_OK) {
+        return err;
+    }
+#endif 
+    return ESP_OK;
 }
 
 

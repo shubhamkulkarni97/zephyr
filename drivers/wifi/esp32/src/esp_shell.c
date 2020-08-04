@@ -1,6 +1,6 @@
 #include <shell/shell.h>
 #include <shell/shell_uart.h>
-#include "rom/ets_sys.h"
+#include "esp32/rom/ets_sys.h"
 #include "esp_wifi.h"
 #include "esp_err.h"
 

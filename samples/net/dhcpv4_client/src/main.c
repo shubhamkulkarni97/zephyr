@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(net_dhcpv4_client_sample, LOG_LEVEL_DBG);
 #include <net/net_core.h>
 #include <net/net_context.h>
 #include <net/net_mgmt.h>
-#include "rom/ets_sys.h"
+#include "esp32/rom/ets_sys.h"
 
 static struct net_mgmt_event_callback mgmt_cb;
 
