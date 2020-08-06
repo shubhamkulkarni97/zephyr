@@ -26,7 +26,7 @@ set(WPA_SUPPLICANT_SRCS "${ESP_IDF_PATH}/components/wpa_supplicant/port/os_xtens
                         "${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/bignum.c"
                         "${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/ccmp.c"
                         "${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/crypto_mbedtls-bignum.c"
-                        #"${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/crypto_mbedtls-ec.c"
+                        "${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/crypto_mbedtls-ec.c"
                         "${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/crypto_ops.c"
                         "${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/crypto_internal-cipher.c"
                         "${ESP_IDF_PATH}/components/wpa_supplicant/src/crypto/crypto_internal-modexp.c"
@@ -120,15 +120,19 @@ zephyr_include_directories(
 
 zephyr_compile_definitions(
   __ets__
-  EMBEDDED_SUPP
   ESP_SUPPLICANT
   IEEE8021X_EAPOL
   EAP_PEER_METHOD
   EAP_MSCHAPv2
   EAP_PEAP
+  USE_WPA2_TASK
   ESPRESSIF_USE
   ESP32_WORKAROUND
   CONFIG_ECC
+  CONFIG_IEEE80211W
+  CONFIG_WPA3_SAE
+  CONFIG_SHA256
+  CONFIG_DPP
   )
 
 zephyr_link_libraries(

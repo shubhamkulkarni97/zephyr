@@ -35,6 +35,8 @@ ESP_EVENT_DEFINE_BASE(WIFI_EVENT);
 
 static void *wifi_msgq_buffer;
 
+static struct k_thread wifi_task_handle;
+
 uint64_t g_wifi_feature_caps = 0;
 
 typedef enum {
@@ -424,18 +426,19 @@ static uint32_t event_group_wait_bits_wrapper(void *event, uint32_t bits_to_wait
 
 static int32_t task_create_pinned_to_core_wrapper(void *task_func, const char *name, uint32_t stack_depth, void *param, uint32_t prio, void *task_handle, uint32_t core_id)
 {
-    task_handle = k_malloc(sizeof(struct k_thread));
-	k_thread_create((struct k_thread *)task_handle, wifi_stack, stack_depth,
+	k_tid_t tid = k_thread_create(&wifi_task_handle, wifi_stack, stack_depth,
 		(k_thread_entry_t)task_func, param, NULL, NULL,
 		prio, K_INHERIT_PERMS, K_NO_WAIT);
+    *(int32_t *)task_handle = (int32_t) tid;
 	return 1;
 }
 
 static int32_t task_create_wrapper(void *task_func, const char *name, uint32_t stack_depth, void *param, uint32_t prio, void *task_handle)
 {
-	k_thread_create((struct k_thread *)task_handle, wifi_stack, stack_depth,
+	k_tid_t tid = k_thread_create(&wifi_task_handle, wifi_stack, stack_depth,
 		(k_thread_entry_t)task_func, param, NULL, NULL,
 		prio, K_INHERIT_PERMS, K_NO_WAIT);
+    *(int32_t *)task_handle = tid;
 	return 1;
 }
 

@@ -20,6 +20,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "esp_event.h"
 #include "esp_timer.h"
 #include "wifi_system.h"
+#include "esp_wpa.h"
 
 #define DEV_DATA(dev) \
 	((struct eth_esp32_runtime *)(dev)->driver_data)
@@ -126,8 +127,9 @@ static int eth_esp32_dev_init(struct device *dev)
 	esp_event_init();
     wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT() ;
     esp_err_t ret = esp_wifi_init(&config);
-    ret |= esp_wifi_set_mode(WIFI_MODE_STA);
+	ret |= esp_supplicant_init();
     ret |= esp_wifi_start();
+	ret |= esp_wifi_set_mode(WIFI_MODE_STA);
 	return ret;
 }
 
