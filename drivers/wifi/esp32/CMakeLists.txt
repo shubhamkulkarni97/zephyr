@@ -102,7 +102,6 @@ set(WPA_SUPPLICANT_SRCS "${ESP_IDF_PATH}/components/wpa_supplicant/port/os_xtens
 zephyr_sources(
   src/esp_wifi_adapter.c
   src/stubs.c
-  src/esp_phy.c
   src/system_api.c
   src/esp_networking.c
   src/esp_event.c
@@ -110,6 +109,8 @@ zephyr_sources(
   ${ESP_IDF_PATH}/components/esp_timer/src/ets_timer_legacy.c
   ${ESP_IDF_PATH}/components/esp_timer/src/esp_timer.c
   ${ESP_IDF_PATH}/components/esp_timer/src/esp_timer_impl_frc_legacy.c
+  ${ESP_IDF_PATH}/components/driver/periph_ctrl.c
+  ${ESP_IDF_PATH}/components/esp_wifi/src/phy_init.c
   ${WPA_SUPPLICANT_SRCS}
   src/esp_shell.c
   )

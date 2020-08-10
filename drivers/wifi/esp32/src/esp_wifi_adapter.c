@@ -18,12 +18,14 @@
 #include "esp_attr.h"
 #include "esp_private/wifi_os_adapter.h"
 #include "posix/pthread.h"
-#include "esp_phy.h"
 #include "wifi_system.h"
 #include "esp_timer.h"
 #include "os.h"
 #include "net/net_pkt.h"
 #include "esp_event.h"
+#include "driver/periph_ctrl.h"
+#include "esp_phy_init.h"
+#include "soc/dport_reg.h"
 
 K_THREAD_STACK_DEFINE(wifi_stack, 4096);
 
@@ -619,11 +621,6 @@ uint32_t zephyr_random(void)
 unsigned long random(void)
 {
     return 0x2848;
-}
-
-int32_t esp_modem_sleep_deregister(uint32_t module)
-{
-    return 0;
 }
 
 #if 0
